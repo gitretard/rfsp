@@ -97,6 +97,7 @@ fn recv() {
         conn.set_write_timeout(Some(time::Duration::from_secs(RW_TIMEOUT)))
             .unwrap();
         // read
+        println!("Incoming connection!\n");
         match conn.read(&mut buf) {
             Ok(_) => {}
             Err(s) => {
@@ -175,6 +176,7 @@ fn recv() {
             f.write(&qogir).unwrap();
             conn.write(&[1; 2]).unwrap();
         }
+        println!("\nAwaiting other incoming connections\n")
     }
 }
 

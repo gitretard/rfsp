@@ -12,6 +12,8 @@ for example
 
 # Please note that ive never made a fucking protocol before.
 
+Usage: cargo run . -- mode
+mode: send and recv
 
 Metadata packet (512 bytes):
 The metadata packet will be sent to the receiver at the start of sending the file.
