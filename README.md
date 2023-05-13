@@ -4,7 +4,9 @@ Status: the code kinda works now but is extremely hacky and more dodgy than Marv
 main.rs:143 
 main.rs:168
 main.rs:55
-for example
+for examples
+
+# my code have 20 bad code practices :(
 
 # Will appreciate any help
 
@@ -16,16 +18,18 @@ Usage: cargo run . -- mode
 
 mode: send and recv
 
+Also please note that even though I MADE THE PROTOCOL. the program itself doesnt follow it exactly (indexing issue + skill issue)
+
 Metadata packet (512 bytes):
 The metadata packet will be sent to the receiver at the start of sending the file.
 0-8 bytes: u64 size in bytes
-8-12 bytes: idempt
-13-511 bytes: Filename (will be truncated if longer than that) // Kept at 1 packet for the sake of simplicity
+8-12 bytes: idempt (must always be 0 at metadata handshake if not recv will send Cancel)
+13-512 bytes: Filename (will be truncated if longer than that) // Kept at 1 packet for the sake of simplicity
 
 
 Data packet (512 bytes):
 0-8 bytes: The Hash of the entire packet (u64 rust default hasher) 
-9 byte: Opcode (1: Cancel, 2:Finished: close conn)
+9 byte: Opcode (1: Cancel, 2: Finished. close conn)
 10-14 bytes: Packet count that starts as 0. so if the same packet gets sent again ignore the packet (u32) (idempt) (Thanks tom scott)
 15-512 bytes: The actual file
 
