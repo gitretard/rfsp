@@ -1,12 +1,11 @@
 mod lib;
 use std::{
-    env,
-    fs::{self, File},
+    env, fs,
     io::{Read, Write},
     net::{self},
-    str, time,convert
+    str, time,
 };
-
+// May be a bit messed up but i just want to get it working. Ill work on it again dont worry
 const RW_TIMEOUT: u64 = 30;
 const MAX_RETRIES: u32 = 3;
 
@@ -34,30 +33,30 @@ fn send(f: &str) {
         conn.flush().unwrap(); // no i am not making a match statement for this one
                                // Confirm if data has reached
         let mut buf: [u8; 2] = [0; 2];
-        for _ in 0..3 {
-            let bytes_read: usize = match conn.read(&mut buf) {
-                Err(s) => {
-                    println!(
-                        "Failed to get confirmation (cant read) (Metadata): {s}\nTrying again..."
-                    );
-                    continue;
-                }
-                Ok(s) => s,
-            };
-            if bytes_read == 0 {
+        match conn.read(&mut buf) {
+            Err(s) => {
+                println!(
+                    "Failed to get confirmation (cant read reply) (Metadata): {s}\nClosing connection"
+                );
                 continue;
             }
-        }
+            Ok(s) => s,
+        };
         if buf[0] < 1 || buf[0] > 3 {
             println!("Invalid status code! The reciever probably isn't a RFSP receiver... Closing the connection (no retries)");
             return;
         }
         // test file
-        let f = fs::File::open("README.md").unwrap();
+        let f = fs::File::open(&f).unwrap();
         let mut idempt: u32 = 0;
         loop {
-            // May be a bit messed up but i just want to get it working. Ill work on it again dont worry
+            idempt += 1;
             if let Some(data) = lib::craft_data_packet(idempt, &f) {
+                // very hacky. will fidn a fix
+                if data == [0; 512] {
+                    conn.write(&lib::craft_done_packet()).unwrap();
+                    return;
+                }
                 conn.write(&data).unwrap();
                 conn.read(&mut buf).unwrap();
                 match buf[0] {
@@ -76,6 +75,7 @@ fn send(f: &str) {
             } else {
                 // Returned none. Sending 2
                 conn.write(&lib::craft_done_packet()).unwrap();
+                return;
             }
         }
     }
@@ -106,12 +106,10 @@ fn recv() {
         }
         // IF i have problems. its because how i index
         // Wont do anything with opcode yet
-        let arr: [u8; 8] = buf[0..8]
-            .try_into()
-            .unwrap();
+        let arr: [u8; 8] = buf[0..8].try_into().unwrap();
         let filesize: u64 = u64::from_be_bytes(arr);
         let array: [u8; 4] = buf[8..12].try_into().expect("Incorrect slice length");
-        let idempt: u32 = u32::from_be_bytes(array);
+        let mut idempt: u32 = u32::from_be_bytes(array);
         if idempt != 0 {
             println!("Invalid idempt value! (must be 0 on metadata handshake)");
             continue;
@@ -126,26 +124,56 @@ fn recv() {
         println!("filesize: {filesize}\nfilen: {filen}\nidempt: {idempt}\nAll ok!\nCreating {filen} in the current dir");
         conn.write(&[1]).unwrap();
         // I need a new buffer :(
-        let mut cat: [u8;512] = [0;512];
-        let mut f = fs::File::create(&filen.replace("\x00","")).unwrap();
+        let mut cat: [u8; 512] = [0; 512];
+        let mut f = fs::File::create(&filen.replace("\x00", "")).unwrap();
         loop {
             conn.read(&mut cat).unwrap(); // Stuck here
-            println!("{:?}",cat);
-            match cat[8]{
-                1 => {println!("Sender requested cancel! cancelling operation");
-                println!("Removing file");
-                fs::remove_file(&filen);
-                continue;
+            match cat[9] {
+                2 => {
+                    println!("Finished! closing connection");
+                    break;
+                }
+                1 => {
+                    println!("Sender requested cancel! cancelling operation");
+                    println!("Removing file");
+                    fs::remove_file(&filen).unwrap();
+                    continue;
+                }
+                0 => {} // Do nothing
+                _ => {
+                    println!("Sender sent unknown opcode. Closing connection");
+                    return;
+                }
             }
-                2 => {}
-                _ => {println!("Sender sent unknown opcode. Closing connection");return;}
+            if idempt >= u32::from_be_bytes(cat[10..14].try_into().unwrap()) {
+                println!("local idempt >= remote idempt. Closing connection and deleteing file");
+                fs::remove_file(&filen.replace("\x00", "")).unwrap();
+                conn.write(&[3; 10]).unwrap();
+                break;
             }
+            idempt += 1;
             // i gotta check the hash damnit
-            if lib::hash(&cat[8..512]) != u64::from_be_bytes(cat[0..8].try_into().unwrap()){
-                conn.write(&[2;2]).unwrap();
-                continue;
+            if lib::hash(&cat[8..512]) != u64::from_be_bytes(cat[0..8].try_into().unwrap()) {
+                conn.write(&[3; 10]).unwrap();
+                println!("Cancel: incorrect hash\nNote: This behavior will be changed soon");
+                println!(
+                    "Local hash: {}\nSender hash: {}\n",
+                    lib::hash(&cat[8..512]),
+                    u64::from_be_bytes(cat[0..8].try_into().unwrap())
+                );
+                break;
             }
-            f.write(&cat[14..512]).unwrap();
+            let mut qogir:Vec<u8> = Vec::new();
+            let mut j = 0;
+            // AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+            for i in 14.. cat.len(){
+                if cat[i] != 0 {
+                    qogir.insert(j, cat[i])
+                }
+                j+=1;
+            }
+            f.write(&qogir).unwrap();
+            conn.write(&[1; 2]).unwrap();
         }
     }
 }

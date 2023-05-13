@@ -42,7 +42,7 @@ where
 pub fn craft_data_packet(idempt:u32,mut f:&File) -> Option<[u8;512]>{ // Will be executed after metadata handshake
     let mut data: [u8;512] = [0;512];
     // Start the loop
-    let mut fpart: [u8;498] = [0;498];
+    let mut fpart: [u8;498] = [0;498]; // I probably forgot to change somethign somewhere
     // I need to use the same fs::File instance to uhhhhhh nvm
     data[9..13].copy_from_slice(&idempt.to_be_bytes());
     let bytes_read = f.read(&mut fpart);
@@ -57,6 +57,6 @@ pub fn craft_data_packet(idempt:u32,mut f:&File) -> Option<[u8;512]>{ // Will be
 
 pub fn craft_done_packet() -> [u8;512]{
     let mut data: [u8;512] = [0;512];
-    data[8] = 2;
+    data[9] = 2;
     data
 }
