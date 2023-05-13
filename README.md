@@ -18,7 +18,7 @@ Data packet (512 bytes):
 18-512 bytes: The actual file
 
 For each packet the receiver will send the following back to the sender
-1: Everything is okay. Continue as normal, 2: Resend (Err || Mismatched hash). 3: Cancelled by user (ctrl+C)
+1: Everything is okay. Continue as normal, 2: Resend (Err || Mismatched hash). 3: Cancelled by user (Q)
 
 If the hash of the received packet isnt the same as the first 8 bytes then the receiver will will send 1 to sender and the sender will resend the packet again if it still isnt the same for the 3rd time the operation will be cancelled
 

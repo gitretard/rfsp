@@ -3,7 +3,7 @@ mod libsend;
 use std::{
     env,
     io::{Read, Write},
-    net::{self, TcpStream},
+    net::{self},
     str, time,
 };
 
@@ -76,8 +76,7 @@ fn recv() {
             return;
         }
     };
-    let mut filen = "";
-    let mut filesize = 0;
+    let filen:&str;
     for conn in listener.incoming() {
         let mut conn = conn.unwrap(); //gee
         conn.set_read_timeout(Some(time::Duration::from_secs(RW_TIMEOUT))).unwrap();
