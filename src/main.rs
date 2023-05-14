@@ -30,8 +30,8 @@ fn send(f: &str) {
                 continue;
             }
         }
-        conn.flush().unwrap(); // no i am not making a match statement for this one
-                               // Confirm if data has reached
+        conn.flush().unwrap(); // no i am not making a match statement for this on                              
+        // Confirm if data has reached
         let mut buf: [u8; 2] = [0; 2];
         match conn.read(&mut buf) {
             Err(s) => {
@@ -42,19 +42,15 @@ fn send(f: &str) {
             }
             Ok(s) => s,
         };
-        if buf[0] < 1 || buf[0] > 3 {
+        if buf[0] < 1 || buf[0] > 3 { // rguh98rw0
             println!("Invalid status code! The reciever probably isn't a RFSP receiver... Closing the connection (no retries)");
             return;
         }
-        // test file
         let f = fs::File::open(&f).unwrap();
         let mut idempt: u32 = 0;
         loop {
             idempt += 1;
-            if let (Some(mut data),bytes_read) = lib::craft_data_packet(idempt, &f) {
-                if bytes_read < 498{
-                    data[9] = 2;
-                }
+            if let Some(data) = lib::craft_data_packet(idempt, &f) {
                 conn.write(&data).unwrap();
                 conn.read(&mut buf).unwrap();
                 match buf[0] {
@@ -69,10 +65,11 @@ fn send(f: &str) {
                     }
                     _ => {}
                 }
+                if data[9] == 2{
+                     return;   
+                }
                 idempt += 1;
-            } else {
-                return;
-            }
+            } 
         }
     }
 }
@@ -125,10 +122,7 @@ fn recv() {
         loop {
             conn.read(&mut cat).unwrap(); // Stuck here
             match cat[9] {
-                2 => {
-                    println!("Finished! closing connection");
-                    break;
-                }
+                2 => {}
                 1 => {
                     println!("Sender requested cancel! cancelling operation");
                     println!("Removing file");
@@ -158,8 +152,12 @@ fn recv() {
                 );
                 break;
             }
-            f.write(&cat).unwrap();
+            f.write(&cat[14..cat.len()]).unwrap();
             conn.write(&[1; 2]).unwrap();
+            if cat[9] == 2{
+                println!("Finished!");
+                break;
+            }
         }
         println!("\nAwaiting other connection\n")
     }

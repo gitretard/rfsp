@@ -39,7 +39,7 @@ where
     hasher.finish()
 }
 
-pub fn craft_data_packet(idempt:u32,mut f:&File) -> (Option<[u8;512]>,usize){ // Will be executed after metadata handshake
+pub fn craft_data_packet(idempt:u32,mut f:&File) -> Option<[u8;512]>{ // Will be executed after metadata handshake
     let mut data: [u8;512] = [0;512];
     // Start the loop
     let mut fpart: [u8;498] = [0;498]; // I probably forgot to change somethign somewhere
@@ -47,11 +47,11 @@ pub fn craft_data_packet(idempt:u32,mut f:&File) -> (Option<[u8;512]>,usize){ //
     data[9..13].copy_from_slice(&idempt.to_be_bytes());
     let b = f.read(&mut fpart);
     let bytes_read = b.unwrap();
-    if bytes_read == 0 {
-        return (None,0)
-    }
+    if bytes_read < 498{
+        data[9] = 2
+    } 
     data[14..512].copy_from_slice(&fpart);
     let hash = hash(&data[8..512]);
     data[0..8].copy_from_slice(&hash.to_be_bytes());
-    (Some(data),bytes_read)
+    Some(data)
 }

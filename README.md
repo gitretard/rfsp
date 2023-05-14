@@ -1,6 +1,6 @@
 # RFSP (Retarded file sending protocol) standard
 
-Status: i broke it again will fix
+Status: Theres still NUL chars. wont make the mistake of not committing ever again
 
 # my code have 20 bad code practices :(
 
