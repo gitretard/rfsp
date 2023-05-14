@@ -51,11 +51,9 @@ fn send(f: &str) {
         let mut idempt: u32 = 0;
         loop {
             idempt += 1;
-            if let Some(data) = lib::craft_data_packet(idempt, &f) {
-                // very hacky. will fidn a fix
-                if data == [0; 512] {
-                    conn.write(&lib::craft_done_packet()).unwrap();
-                    return;
+            if let (Some(mut data),bytes_read) = lib::craft_data_packet(idempt, &f) {
+                if bytes_read < 498{
+                    data[9] = 2;
                 }
                 conn.write(&data).unwrap();
                 conn.read(&mut buf).unwrap();
@@ -73,8 +71,6 @@ fn send(f: &str) {
                 }
                 idempt += 1;
             } else {
-                // Returned none. Sending 2
-                conn.write(&lib::craft_done_packet()).unwrap();
                 return;
             }
         }
@@ -152,7 +148,6 @@ fn recv() {
                 break;
             }
             idempt += 1;
-            // i gotta check the hash damnit
             if lib::hash(&cat[8..512]) != u64::from_be_bytes(cat[0..8].try_into().unwrap()) {
                 conn.write(&[3; 10]).unwrap();
                 println!("Cancel: incorrect hash\nNote: This behavior will be changed soon");
@@ -163,16 +158,7 @@ fn recv() {
                 );
                 break;
             }
-            let mut qogir:Vec<u8> = Vec::new();
-            let mut j = 0;
-            // AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
-            for i in 14.. cat.len(){
-                if cat[i] != 0 {
-                    qogir.insert(j, cat[i])
-                }
-                j+=1;
-            }
-            f.write(&qogir).unwrap();
+            f.write(&cat).unwrap();
             conn.write(&[1; 2]).unwrap();
         }
         println!("\nAwaiting other connection\n")

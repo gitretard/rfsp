@@ -1,10 +1,6 @@
 # RFSP (Retarded file sending protocol) standard
 
-Status: the code kinda works now but is extremely hacky and more dodgy than Marvin Gay Jr's father figure. see 
-main.rs:143 
-main.rs:168
-main.rs:55
-for examples
+Status: i broke it again will fix
 
 # my code have 20 bad code practices :(
 
