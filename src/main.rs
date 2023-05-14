@@ -65,8 +65,10 @@ fn send(f: &str) {
                     }
                     _ => {}
                 }
+                // Check if finished (plaster fix)
                 if data[9] == 2{
-                     return;   
+                    println!("Finished sending the file!");
+                    return;   
                 }
                 idempt += 1;
             } 
@@ -114,7 +116,7 @@ fn recv() {
                 return;
             } // maybe return
         };
-        println!("filesize: {filesize}\nfilen: {filen}\nidempt: {idempt}\nAll ok!\nCreating {filen} in the current dir");
+        println!("filesize: {filesize}\nfilen: {filen}\nidempt: {idempt}\n\nCreating {filen} in the current dir");
         conn.write(&[1]).unwrap();
         // I need a new buffer :(
         let mut cat: [u8; 512] = [0; 512];

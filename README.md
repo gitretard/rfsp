@@ -1,8 +1,9 @@
 # RFSP (Retarded file sending protocol) standard
+# I will stop working on this for a while and start other projects to get used to rust and programming. I will come back to this project and fix it up
 
 Status: Theres still NUL chars. wont make the mistake of not committing ever again
 
-# my code have 20 bad code practices :(
+my code have 20 bad code practices :(
 
 # Will appreciate any help
 
